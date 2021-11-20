@@ -83,17 +83,21 @@ async function report(result) {
     return
   }
 
+  const summary = getSummary(result.stats);
+
   await replaceComment({
     ...commentGeneralOptions(),
     body: `${title}
 <details>
-<summary>${getSummary(result.stats)}</summary>
+<summary>${summary}</summary>
 
 ${getTable(getExamples(result.results))}
 
 </details>
 `
   })
+
+  core.setFailed(summary);
 }
 
 exports.getTable = getTable
