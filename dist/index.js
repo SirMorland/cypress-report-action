@@ -6412,7 +6412,9 @@ ${getTable(getExamples(result.results))}
 `
   })
 
-  core.setFailed(summary);
+  if(result.stats.failures) {
+    core.setFailed(summary);
+  }
 }
 
 exports.getTable = getTable
