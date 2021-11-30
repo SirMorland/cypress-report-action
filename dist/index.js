@@ -6368,41 +6368,37 @@ function getSummary(stats) {
     ` other: ${stats.other}.`
 }
 
-function pullRequestId() {
-  const pullRequestId = github.context.issue.number
-  if (!pullRequestId) {
-    throw new Error('Cannot find the pull request ID.')
-  }
-  return pullRequestId
-}
-
-const commentGeneralOptions = () => {
+const commentGeneralOptions = (pullRequestId) => {
   return {
     token: core.getInput('token', {required: true}),
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
-    issue_number: pullRequestId()
+    issue_number: pullRequestId
   }
 }
 
 async function report(result) {
-  const title = core.getInput('title', {required: true})
-  const always = core.getInput('always', {required: true})
-
-  if (!result.stats.failures && !always) {
-    await deleteComment({
-      ...commentGeneralOptions(),
-      body: title,
-      startsWith: true
-    })
-    return
-  }
+  const pullRequestId = github.context.issue.number
 
   const summary = getSummary(result.stats);
 
-  await replaceComment({
-    ...commentGeneralOptions(),
-    body: `${title}
+  if(pullRequestId) {
+    const title = core.getInput('title', {required: true})
+    const always = core.getInput('always', {required: true})
+    const options = commentGeneralOptions(pullRequestId)
+
+    if (!result.stats.failures && !always) {
+      await deleteComment({
+        ...options,
+        body: title,
+        startsWith: true
+      })
+      return
+    }
+
+    await replaceComment({
+      ...options,
+      body: `${title}
 <details>
 <summary>${summary}</summary>
 
@@ -6410,7 +6406,9 @@ ${getTable(getExamples(result.results))}
 
 </details>
 `
-  })
+    })
+
+  }
 
   if(result.stats.failures) {
     core.setFailed(summary);
